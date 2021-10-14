@@ -1,0 +1,62 @@
+---
+title: "p8105_hw2_cw3370"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(p8105.datasets)
+library(tidyverse)
+```
+# Problem 1
+```{r}
+data("instacart")
+force(instacart)
+
+nrow(distinct(instacart,aisle))
+most_items_aisle <- instacart %>% 
+  group_by(aisle,aisle_id) %>% 
+  summarize(n_items = n()) %>% 
+  arrange(desc(n_items))
+
+number_items_aisle <- most_items_aisle %>% 
+  filter(n_items > 10000)
+
+
+ggplot(data = number_items_aisle,aes(x = aisle_id, y = n_items))+
+  geom_point()+
+  geom_text(aes(label = aisle))+
+  facet_grid(. ~ aisle_id)
+
+most_popular_items <- instacart %>% 
+  filter(aisle ==  "baking ingredients"|aisle =="dog food care"|aisle == "packaged vegetables fruits") %>% 
+  group_by(aisle,product_name) %>% 
+  summarize(n_items = n()) %>% 
+  arrange(aisle,desc(n_items))
+
+mean_hour_of_order <- instacart %>% 
+  filter(product_name == "Pink Lady Apples"|product_name == "Coffee Ice Cream") %>% 
+  select(order_dow,order_hour_of_day,product_name) %>% 
+  group_by(product_name,order_dow) %>% 
+  summarize(mean_hour = mean(order_hour_of_day)) %>% 
+  pivot_wider(
+    names_from = "order_dow",
+    values_from = "mean_hour"
+  )
+  
+
+
+```
+
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

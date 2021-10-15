@@ -12,13 +12,18 @@ library(tidyverse)
 ```{r}
 data("instacart")
 force(instacart)
-
+```
+How many aisles are there, and which aisles are the most items ordered from?
+```{r}
 nrow(distinct(instacart,aisle))
 most_items_aisle <- instacart %>% 
   group_by(aisle,aisle_id) %>% 
   summarize(n_items = n()) %>% 
   arrange(desc(n_items))
 
+```
+Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+```{r}
 number_items_aisle <- most_items_aisle %>% 
   filter(n_items > 10000)
 
@@ -28,12 +33,20 @@ ggplot(data = number_items_aisle,aes(x = aisle_id, y = n_items))+
   geom_text(aes(label = aisle))+
   facet_grid(. ~ aisle_id)
 
+```
+Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+```{r}
 most_popular_items <- instacart %>% 
-  filter(aisle ==  "baking ingredients"|aisle =="dog food care"|aisle == "packaged vegetables fruits") %>% 
+  filter(aisle ==  "baking ingredients" | aisle == "dog food care"|aisle == "packaged vegetables fruits") %>% 
   group_by(aisle,product_name) %>% 
   summarize(n_items = n()) %>% 
-  arrange(aisle,desc(n_items))
-
+  mutate(popular_rank = order(order(n_items, decreasing = TRUE))) %>% 
+  filter(popular_rank %in% c(1:3)) %>% 
+  arrange(aisle,desc(n_items)) %>% 
+  knitr::kable()
+```
+Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+```{r}
 mean_hour_of_order <- instacart %>% 
   filter(product_name == "Pink Lady Apples"|product_name == "Coffee Ice Cream") %>% 
   select(order_dow,order_hour_of_day,product_name) %>% 
@@ -43,12 +56,74 @@ mean_hour_of_order <- instacart %>%
     names_from = "order_dow",
     values_from = "mean_hour"
   )
-  
-
 
 ```
 
+#Problem 2
+Do some data cleaning
+```{r}
+data("brfss_smart2010")
+force(brfss_smart2010)
 
+brfss_smart2010 <- brfss_smart2010 %>% 
+  filter(Topic == "Overall Health" & Response %in% c("Excellent","Very good","Good","Fair","Poor")) %>% 
+  mutate(
+    Response = factor(Response,ordered = TRUE,levels = c("Poor","Fair","Good","Very good","Excellent"))
+  )
+```
+
+In 2002, which states were observed at 7 or more locations? What about in 2010?
+```{r}
+locations_observed_2002 <- 
+  brfss_smart2010 %>% 
+  separate(Locationdesc,into = c("state","Location"),sep = 5) %>% 
+  select(-state,State = Locationabbr) %>%
+  filter(Year == 2002) %>% 
+  group_by(State)%>%
+  summarize(location_number = n()/5) %>% 
+  filter(location_number >=7)
+
+locations_observed_2010 <- 
+  brfss_smart2010 %>% 
+  separate(Locationdesc,into = c("state","Location"),sep = 5) %>% 
+  select(-state,State = Locationabbr) %>%
+  filter(Year == 2010) %>% 
+  group_by(State) %>%
+  summarize(location_number = n()/5) %>% 
+  filter(location_number >= 7)
+```
+Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+```{r}
+average_excellent <- 
+  brfss_smart2010 %>% 
+  filter(Response == "Excellent") %>% 
+  select(Year, State = Locationabbr, Data_value) %>% 
+  group_by(Year,State) %>%
+  summarize(
+    mean_value = mean(Data_value,na.rm = TRUE),
+    )
+
+ggplot(average_excellent,aes(x = Year, y = mean_value,group = State, color = State))+
+  geom_point(alpha = 0.3) +
+  geom_line(alpha = 0.7)
+```
+Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+```{r}
+distribution_response <- 
+  brfss_smart2010 %>% 
+  select(Year, Response,State = Locationabbr, Data_value) %>% 
+  filter(State == "NY",
+         Year %in% c(2006,2010)) %>% 
+  group_by(Year,Response) %>% 
+  summarize(
+    mean_value = round(mean(Data_value,na.rm = TRUE),2),
+    )
+
+ggplot(distribution_response,aes(x = Response, y = mean_value))+
+  geom_point(aes(color = Response)) +
+  geom_text(aes(label = mean_value), nudge_x=-0 ,nudge_y=-0.6) +
+  facet_grid(.~Year)
+```
 
 
 ## Including Plots

@@ -172,7 +172,7 @@ accelerometers_df_minute <- accelerometers_df %>%
     values_to = "activity"
   ) %>% 
   mutate(activity = round(activity,2),
-         Minute = as.numeric(Minute))
+         Minute = as.numeric(Minute)) %>% 
   select(week,day_id,day,day_type,Minute,activity)
 
 accelerometers_df <- accelerometers_df %>% 

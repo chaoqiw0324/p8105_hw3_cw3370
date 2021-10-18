@@ -7,29 +7,38 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(p8105.datasets)
 library(tidyverse)
+library(lubridate)
 ```
 # Problem 1
 ```{r results='hide'}
 data("instacart")
 force(instacart)
 ```
+The goal is to do some exploration of this dataset. To that end, write a short description of the dataset, noting the size and structure of the data, describing some key variables, and giving illstrative examples of observations. Then, do or answer the following
+```{r}
+
+```
+
 How many aisles are there, and which aisles are the most items ordered from?
 ```{r}
 nrow(distinct(instacart,aisle))
 ```
 Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+
 ```{r results='hide'}
-number_items_aisle <- instacart %>% 
-  group_by(aisle,aisle_id) %>% 
-  summarize(n_items = n()) %>% 
-  arrange(desc(n_items)) %>% 
-  filter(n_items > 10000)
+number_items_aisle <- instacart %>%
+  count(aisle) %>% 
+  filter(n > 10000) %>%
+  mutate(
+    rank = rank(desc(n)) #reorder/ranking
+    ) 
 
-ggplot(data = number_items_aisle,aes(x = aisle_id, y = n_items)) +
-  geom_point() +
-  geom_text(aes(label = aisle)) +
+ggplot(data = number_items_aisle,aes(x = aisle, y = n)) +
+  geom_bar(alpha = 0.4, stat = "identity") +
+  geom_text(aes(label = n,hjust = -0.1)) +
+  geom_text(aes(label = rank,hjust = 1)) +
+  labs(x = "Aisle",y = "Number of Items" ) +
   coord_flip()
-
 ```
 Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
 ```{r}
@@ -50,9 +59,18 @@ mean_hour_of_order <- instacart %>%
   select(order_dow,order_hour_of_day,product_name) %>% 
   group_by(product_name,order_dow) %>% 
   summarize(mean_hour = mean(order_hour_of_day)) %>% 
+  mutate(order_dow = recode(order_dow , 
+                            '0' = "Sunday",'1' = "Monday",'2' = "Tuesday",
+                            '3' = "Wednesday",'4' = "Thursday",'5' = "Friday",'6' = "Saturday"),
+         hour = mean_hour %/% 1,
+         minute = (mean_hour %% 1*60) %/% 1,
+         second = round(round((mean_hour %% 1*60) %% 1,5)*60),
+         time = hms(paste(hour,minute,second,sep = ":"))
+         ) %>%
+  select(product_name,order_dow,time) %>% 
   pivot_wider(
     names_from = "order_dow",
-    values_from = "mean_hour"
+    values_from = "time"
   )
 
 knitr::kable(mean_hour_of_order)
@@ -93,6 +111,11 @@ locations_observed_2010 <-
   group_by(State) %>%
   summarize(location_number = n()/5) %>% 
   filter(location_number >= 7)
+
+knitr::kable(locations_observed_2002)
+knitr::kable(locations_observed_2010)
+
+
 ```
 Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
 ```{r}
@@ -123,17 +146,88 @@ distribution_response <-
 
 ggplot(distribution_response,aes(x = Response, y = mean_value))+
   geom_point(aes(color = Response)) +
-  geom_text(aes(label = mean_value), nudge_x=-0 ,nudge_y=-0.6) +
+  geom_text(aes(label = mean_value), nudge_x=0 ,nudge_y=-0.6) +
   facet_grid(.~Year)
 ```
 
 
-## Including Plots
+#Problem 3
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r results='hide'}
+accelerometers_df <- read_csv("data/accel_data.csv")
+```
+Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
+```{r}
+accelerometers_df_minute <- accelerometers_df %>% 
+  mutate(day_type = case_when(
+    day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday") ~ "weekday",
+    day %in% c("Saturday","Sunday") ~ "weekend"
+  )) %>% 
+  pivot_longer(
+    activity.1:activity.1440,
+    names_to = "Minute",
+    names_prefix = "activity.",
+    values_to = "activity"
+  ) %>% 
+  mutate(activity = round(activity,2),
+         Minute = as.numeric(Minute))
+  select(week,day_id,day,day_type,Minute,activity)
+
+accelerometers_df <- accelerometers_df %>% 
+  mutate(day_type = case_when(
+    day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday") ~ "weekday",
+    day %in% c("Saturday","Sunday") ~ "weekend"
+  )) %>% 
+  pivot_longer(
+    activity.1:activity.1440,
+    names_to = "Minute",
+    names_prefix = "activity.",
+    values_to = "activity"
+  ) %>% 
+  mutate(activity = round(activity,2),
+         Minute = as.numeric(Minute),
+         hour = Minute %/% 60,
+         minute = Minute %% 60,) %>% 
+  select(week,day_id,day,day_type,-Minute,hour,minute,activity)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+```{r}
+day_total_activity <- accelerometers_df %>% 
+  group_by(day_id) %>% 
+  summarize(
+    week = sum(week)/1440,
+    total_activity = sum(activity)
+  )
+
+knitr::kable(day_total_activity)
+
+ggplot(day_total_activity,aes(x = day_id, y = total_activity))+
+  geom_point(alpha = 0.4)+
+  geom_line(aes(color = week))+
+  viridis::scale_color_viridis(
+    name = "week", 
+    discrete = FALSE
+  )
+
+
+```
+Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+```{r}
+daily_activity <- accelerometers_df %>% 
+  group_by(day_id,hour) %>% 
+  summarize(
+    hour_activity = sum(activity)
+  ) %>% 
+  mutate(day_of_week = day_id - 7*(day_id %/% 7),
+         week = day_id %/% 7 + 1) 
+
+ggplot(daily_activity,aes(x = hour, y = hour_activity,group = day_id)) +
+  geom_point(aes(color = day_of_week))
+
+ggplot(accelerometers_df_minute,aes(x = Minute , y = activity,group = day)) +
+  geom_point(aes(color = day,alpha = 0.3))
+```
+

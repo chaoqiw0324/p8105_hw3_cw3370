@@ -68,7 +68,7 @@ number_items_aisle <- instacart %>%
     rank = rank(desc(n))
   )
 
-## blue number means the rank, black number means the number of items.
+## blue number means the rank, black number means the number of items. the aisle are ordered by first letter.
 ggplot(data = number_items_aisle,aes(x = aisle, y = n)) +
   geom_bar(alpha = 0.4, stat = "identity") +
   geom_text(aes(label = n,hjust = 0.8),alpha = 0.5) + 
@@ -115,7 +115,7 @@ knitr::kable(mean_hour_of_order)
 ```
 
 #Problem 2
-<font size = 5>Do some data cleaning
+<font size = 5>Do some data cleaning.</font>
 ```{r results='hide'}
 data("brfss_smart2010")
 force(brfss_smart2010)
@@ -127,7 +127,7 @@ brfss_smart2010 <- brfss_smart2010 %>%
   )
 ```
 
-<font size = 5>In 2002, which states were observed at 7 or more locations? What about in 2010?
+<font size = 5>In 2002, which states were observed at 7 or more locations? What about in 2010?</font>
 ```{r }
 locations_observed_2002 <- 
   brfss_smart2010 %>% 
@@ -152,7 +152,7 @@ knitr::kable(locations_observed_2010)
 
 
 ```
-<font size = 5>Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+<font size = 5>Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).</font>
 ```{r}
 average_excellent <- 
   brfss_smart2010 %>% 
@@ -163,11 +163,29 @@ average_excellent <-
     mean_value = mean(Data_value,na.rm = TRUE),
     )
 
+average_excellent <- 
+  brfss_smart2010 %>% 
+  filter(Response == "Excellent") %>% 
+  select(Year, State = Locationabbr, Data_value) %>% 
+  group_by(State) %>%
+  summarize(
+    mean_value = mean(Data_value,na.rm = TRUE),
+    ) %>% 
+  mutate(group = case_when(
+    15<mean_value&mean_value <17 ~ "1",
+    17<mean_value&mean_value <19 ~ "2",
+    19<mean_value&mean_value <21 ~ "3",
+    21<mean_value&mean_value <23 ~ "4",
+    23<mean_value&mean_value <25 ~ "5",
+    25<mean_value&mean_value <27 ~ "6",
+    27<mean_value&mean_value <29 ~ "7"
+  ))
+
 ggplot(average_excellent,aes(x = Year, y = mean_value,group = State, color = State))+
   geom_point(alpha = 0.3) +
-  geom_line(alpha = 0.7)
+  geom_line(alpha = 0.7) 
 ```
-<font size = 5>Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+<font size = 5>Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.</font>
 ```{r}
 distribution_response <- 
   brfss_smart2010 %>% 
@@ -186,7 +204,7 @@ ggplot(distribution_response,aes(x = Response, y = Data_value))+
 ```{r results='hide'}
 accelerometers_df <- read_csv("data/accel_data.csv")
 ```
-<font size = 5>Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
+<font size = 5>Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).</font>
 
 
 
@@ -211,7 +229,7 @@ accelerometers_df_hm <- accelerometers_df %>%
   select(week,day_id,day,day_of_week,day_type,Minute,hour,minute,activity,)
 ```
 
-Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+<font size = 5>Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?</font>
 ```{r}
 day_total_activity <- accelerometers_df_hm %>% 
   group_by(week,day_of_week) %>% 
@@ -237,16 +255,13 @@ ggplot(day_total_activity,aes(x = day_of_week, y = total_activity,group = week))
 
 
 ```
-Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+<font size = 5>Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.</font>
 ```{r}
 daily_activity <- accelerometers_df_hm %>% 
   group_by(week,day_of_week,hour) %>% 
   summarize(
     hour_activity = sum(activity)
-  ) %>% 
-
-
-
+  ) 
 
 accelerometers_df_hm %>% 
   filter(activity != 1.00) %>% 

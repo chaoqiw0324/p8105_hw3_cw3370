@@ -8,52 +8,90 @@ knitr::opts_chunk$set(echo = TRUE)
 library(p8105.datasets)
 library(tidyverse)
 library(lubridate)
+
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
 # Problem 1
+<font size = 5>The goal is to do some exploration of this dataset. To that end, write a short description of the dataset, noting the size and structure of the data, describing some key variables, and giving illstrative examples of observations. Then, do or answer the following</font>
 ```{r results='hide'}
 data("instacart")
 force(instacart)
 ```
-The goal is to do some exploration of this dataset. To that end, write a short description of the dataset, noting the size and structure of the data, describing some key variables, and giving illstrative examples of observations. Then, do or answer the following
-```{r}
 
-```
+<font size = 4 face="Times New Roman"> Instacart includes `r nrow(instacart)` observations for `r ncol(instacart)` variables. For variables, they are `r colnames(instacart)`. 
 
-How many aisles are there, and which aisles are the most items ordered from?
+`r colnames(instacart)[1]` is the order id. 
+
+`r colnames(instacart)[c(2,11)]` is the id and name of product, which are the key variable.
+
+`r colnames(instacart)[3]` is order in which each product was added to cart.
+
+`r colnames(instacart)[4]` shows whether the user bought this product before. 
+
+`r colnames(instacart)[5]` is the user id. 
+
+`r colnames(instacart)[c(7,9)]`is the order sequence number for user, the day of week and the hour of day order was placed. 
+
+`r colnames(instacart)[10]` is days since the last order.
+
+`r colnames(instacart)[c(12,14)]` is the id and name of aisle, which are the key variable.
+
+`r colnames(instacart)[c(13,15)]` is the id and name of department.
+
+For example, the first observation shows a customer whose user id is `r instacart[1,5]`, buy `r instacart[1,11]`(product id:`r instacart[1,2]`) for the `r instacart[1,4]` time at `r instacart[1,9]` o'clock in the `r instacart[1,8]` day of week,which is the `r instacart[1,3]` product in this order. This product belongs to `r instacart[1,14]` aisle(aisle id:`r instacart[1,12]`) and `r instacart[1,15]` department(department id:`r instacart[1,13]`). </font>
+
+
+<font size = 5>How many aisles are there, and which aisles are the most items ordered from?</font>
+
 ```{r}
 nrow(distinct(instacart,aisle))
-```
-Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
+most_items_aisle <- instacart %>% 
+  group_by(aisle) %>% 
+  summarize(n_items = n()) %>% 
+  arrange(desc(n_items))
+```
+<font size = 4 face="Times New Roman"> There are `r nrow(distinct(instacart,aisle))` aisles and `r most_items_aisle[1,1]` is the most items ordered from.
+
+<font size = 5>Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.</font>
 ```{r results='hide'}
 number_items_aisle <- instacart %>%
   count(aisle) %>% 
-  filter(n > 10000) %>%
+  filter(n > 10000) %>% 
   mutate(
-    rank = rank(desc(n)) #reorder/ranking
-    ) 
+    rank = rank(desc(n))
+  )
 
+## blue number means the rank, black number means the number of items.
 ggplot(data = number_items_aisle,aes(x = aisle, y = n)) +
   geom_bar(alpha = 0.4, stat = "identity") +
-  geom_text(aes(label = n,hjust = -0.1)) +
-  geom_text(aes(label = rank,hjust = 1)) +
-  labs(x = "Aisle",y = "Number of Items" ) +
+  geom_text(aes(label = n,hjust = 0.8),alpha = 0.5) + 
+  geom_text(aes(label = rank,hjust = -1.5),color ="blue",alpha = 0.5) +
+  labs(title = "Number of Items For Aisles", x = "Aisle",y = "Number of Items" ) +
   coord_flip()
 ```
-Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+<font size = 5>Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.</font>
 ```{r}
 most_popular_items <- instacart %>% 
   filter(aisle ==  "baking ingredients" | aisle == "dog food care"|aisle == "packaged vegetables fruits") %>% 
   group_by(aisle,product_name) %>% 
-  summarize(n_items = n()) %>% 
-  mutate(popular_rank = order(order(n_items, decreasing = TRUE))) %>% 
+  summarize(Number = n()) %>% 
+  mutate(popular_rank = order(order(Number, decreasing = TRUE))) %>% 
   filter(popular_rank %in% c(1:3)) %>% 
-  arrange(aisle,desc(n_items)) 
-
+  arrange(aisle,desc(Number)) 
+  
 knitr::kable(most_popular_items)
 ```
-Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+<font size = 5>Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)</font>
 ```{r}
+## l adjust the order time into hour,minute,second
 mean_hour_of_order <- instacart %>% 
   filter(product_name == "Pink Lady Apples"|product_name == "Coffee Ice Cream") %>% 
   select(order_dow,order_hour_of_day,product_name) %>% 
@@ -78,13 +116,11 @@ knitr::kable(mean_hour_of_order)
 ```
 
 #Problem 2
-Do some data cleaning
+<font size = 5>Do some data cleaning
 ```{r results='hide'}
 data("brfss_smart2010")
 force(brfss_smart2010)
-```
 
-```{r results='hide'}
 brfss_smart2010 <- brfss_smart2010 %>% 
   filter(Topic == "Overall Health" & Response %in% c("Excellent","Very good","Good","Fair","Poor")) %>% 
   mutate(
@@ -92,7 +128,7 @@ brfss_smart2010 <- brfss_smart2010 %>%
   )
 ```
 
-In 2002, which states were observed at 7 or more locations? What about in 2010?
+<font size = 5>In 2002, which states were observed at 7 or more locations? What about in 2010?
 ```{r }
 locations_observed_2002 <- 
   brfss_smart2010 %>% 
@@ -117,7 +153,7 @@ knitr::kable(locations_observed_2010)
 
 
 ```
-Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+<font size = 5>Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
 ```{r}
 average_excellent <- 
   brfss_smart2010 %>% 
@@ -132,50 +168,31 @@ ggplot(average_excellent,aes(x = Year, y = mean_value,group = State, color = Sta
   geom_point(alpha = 0.3) +
   geom_line(alpha = 0.7)
 ```
-Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+<font size = 5>Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
 ```{r}
 distribution_response <- 
   brfss_smart2010 %>% 
   select(Year, Response,State = Locationabbr, Data_value) %>% 
   filter(State == "NY",
-         Year %in% c(2006,2010)) %>% 
-  group_by(Year,Response) %>% 
-  summarize(
-    mean_value = round(mean(Data_value,na.rm = TRUE),2),
-    )
+         Year %in% c(2006,2010)) 
 
-ggplot(distribution_response,aes(x = Response, y = mean_value))+
-  geom_point(aes(color = Response)) +
-  geom_text(aes(label = mean_value), nudge_x=0 ,nudge_y=-0.6) +
-  facet_grid(.~Year)
+ggplot(distribution_response,aes(x = Response, y = Data_value))+
+  geom_boxplot(aes(color = Response)) +
+  facet_grid(1.~Year)
 ```
 
 
 #Problem 3
 
-You can also embed plots, for example:
-
 ```{r results='hide'}
 accelerometers_df <- read_csv("data/accel_data.csv")
 ```
-Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
-```{r}
-accelerometers_df_minute <- accelerometers_df %>% 
-  mutate(day_type = case_when(
-    day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday") ~ "weekday",
-    day %in% c("Saturday","Sunday") ~ "weekend"
-  )) %>% 
-  pivot_longer(
-    activity.1:activity.1440,
-    names_to = "Minute",
-    names_prefix = "activity.",
-    values_to = "activity"
-  ) %>% 
-  mutate(activity = round(activity,2),
-         Minute = as.numeric(Minute)) %>% 
-  select(week,day_id,day,day_type,Minute,activity)
+<font size = 5>Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
 
-accelerometers_df <- accelerometers_df %>% 
+
+
+```{r}
+accelerometers_df_hm <- accelerometers_df %>% 
   mutate(day_type = case_when(
     day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday") ~ "weekday",
     day %in% c("Saturday","Sunday") ~ "weekend"
@@ -187,26 +204,33 @@ accelerometers_df <- accelerometers_df %>%
     values_to = "activity"
   ) %>% 
   mutate(activity = round(activity,2),
-         Minute = as.numeric(Minute),
+         Minute = as.numeric(Minute)-1,
          hour = Minute %/% 60,
-         minute = Minute %% 60,) %>% 
-  select(week,day_id,day,day_type,-Minute,hour,minute,activity)
+         minute = Minute %% 60,
+         day_of_week = recode(day,"Sunday" = "7","Monday"= "1","Tuesday"= "2","Wednesday"= "3", "Thursday"= "4","Friday"= "5","Saturday"= "6")) %>% 
+  arrange(week,day_of_week) %>% 
+  select(week,day_id,day,day_of_week,day_type,Minute,hour,minute,activity,)
 ```
 
 Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 ```{r}
-day_total_activity <- accelerometers_df %>% 
-  group_by(day_id) %>% 
+day_total_activity <- accelerometers_df_hm %>% 
+  group_by(week,day_of_week) %>% 
   summarize(
-    week = sum(week)/1440,
     total_activity = sum(activity)
-  )
+  ) %>% 
+  mutate(day_of_week_eng = recode(day_of_week, 
+                            '7' = "Sunday",'1' = "Monday",'2' = "Tuesday",
+                            '3' = "Wednesday",'4' = "Thursday",'5' = "Friday",'6' = "Saturday"))
+
 
 knitr::kable(day_total_activity)
 
-ggplot(day_total_activity,aes(x = day_id, y = total_activity))+
+ggplot(day_total_activity,aes(x = day_of_week, y = total_activity,group = week))+
   geom_point(alpha = 0.4)+
   geom_line(aes(color = week))+
+  scale_x_discrete(breaks = c(1,2,3,4,5,6,7),
+                   labels = c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))+
   viridis::scale_color_viridis(
     name = "week", 
     discrete = FALSE
@@ -216,18 +240,16 @@ ggplot(day_total_activity,aes(x = day_id, y = total_activity))+
 ```
 Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
 ```{r}
-daily_activity <- accelerometers_df %>% 
-  group_by(day_id,hour) %>% 
+daily_activity <- accelerometers_df_hm %>% 
+  group_by(week,day_of_week,hour) %>% 
   summarize(
     hour_activity = sum(activity)
-  ) %>% 
-  mutate(day_of_week = day_id - 7*(day_id %/% 7),
-         week = day_id %/% 7 + 1) 
+  ) 
+sample <- accelerometers_df_hm %>% 
+  sample_n(1000) %>% 
+  filter(activity != 1.00)
 
-ggplot(daily_activity,aes(x = hour, y = hour_activity,group = day_id)) +
-  geom_point(aes(color = day_of_week))
-
-ggplot(accelerometers_df_minute,aes(x = Minute , y = activity,group = day)) +
-  geom_point(aes(color = day,alpha = 0.3))
+ggplot(sample,aes(x = Minute , y = activity,group = day)) +
+  geom_point(aes(color = day,size = activity),alpha = 0.5) 
 ```
 

@@ -1,5 +1,5 @@
 ---
-title: "p8105_hw2_cw3370"
+title: "p8105_hw3_cw3370"
 output: html_document
 ---
 
@@ -8,7 +8,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(p8105.datasets)
 library(tidyverse)
 library(lubridate)
-
 
 options(
   ggplot2.continuous.colour = "viridis",
@@ -244,12 +243,17 @@ daily_activity <- accelerometers_df_hm %>%
   group_by(week,day_of_week,hour) %>% 
   summarize(
     hour_activity = sum(activity)
-  ) 
-sample <- accelerometers_df_hm %>% 
-  sample_n(1000) %>% 
-  filter(activity != 1.00)
+  ) %>% 
 
-ggplot(sample,aes(x = Minute , y = activity,group = day)) +
-  geom_point(aes(color = day,size = activity),alpha = 0.5) 
+
+
+
+accelerometers_df_hm %>% 
+  filter(activity != 1.00) %>% 
+  ggplot(aes(x = Minute , y = activity,group = day)) +
+  geom_line(aes(color = day),alpha = 0.5) +
+  geom_point(aes(color = day),alpha = 0.5,size = 0.5) +
+  geom_rug(aes(color = day),alpha = 0.5)
+
 ```
 

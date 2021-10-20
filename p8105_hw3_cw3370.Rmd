@@ -1,6 +1,6 @@
 ---
 title: "p8105_hw3_cw3370"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -76,6 +76,8 @@ ggplot(data = number_items_aisle,aes(x = aisle, y = n)) +
   labs(title = "Number of Items For Aisles", x = "Aisle",y = "Number of Items" ) +
   coord_flip()
 ```
+<font size = 4 face="Times New Roman">blue number means the rank, black number means the number of items. the aisle are ordered by first letter.</font>
+
 <font size = 5>Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.</font>
 ```{r}
 most_popular_items <- instacart %>% 
@@ -114,7 +116,7 @@ knitr::kable(mean_hour_of_order)
 
 ```
 
-#Problem 2
+# Problem 2
 <font size = 5>Do some data cleaning.</font>
 ```{r results='hide'}
 data("brfss_smart2010")
@@ -137,7 +139,11 @@ locations_observed_2002 <-
   group_by(State)%>%
   summarize(location_number = n()/5) %>% 
   filter(location_number >=7)
+knitr::kable(locations_observed_2002)
+```
+<font size = 4 face="Times New Roman">States observed at 7 or more locations in 2002 are shown above</font>
 
+```{r }
 locations_observed_2010 <- 
   brfss_smart2010 %>% 
   separate(Locationdesc,into = c("state","Location"),sep = 5) %>% 
@@ -147,11 +153,14 @@ locations_observed_2010 <-
   summarize(location_number = n()/5) %>% 
   filter(location_number >= 7)
 
-knitr::kable(locations_observed_2002)
+
 knitr::kable(locations_observed_2010)
 
 
 ```
+<font size = 4 face="Times New Roman">States observed at 7 or more locations in 2010 are shown above </font>
+
+
 <font size = 5>Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).</font>
 ```{r}
 average_excellent <- 
@@ -160,31 +169,18 @@ average_excellent <-
   select(Year, State = Locationabbr, Data_value) %>% 
   group_by(Year,State) %>%
   summarize(
-    mean_value = mean(Data_value,na.rm = TRUE),
-    )
-
-average_excellent <- 
-  brfss_smart2010 %>% 
-  filter(Response == "Excellent") %>% 
-  select(Year, State = Locationabbr, Data_value) %>% 
-  group_by(State) %>%
-  summarize(
-    mean_value = mean(Data_value,na.rm = TRUE),
-    ) %>% 
-  mutate(group = case_when(
-    15<mean_value&mean_value <17 ~ "1",
-    17<mean_value&mean_value <19 ~ "2",
-    19<mean_value&mean_value <21 ~ "3",
-    21<mean_value&mean_value <23 ~ "4",
-    23<mean_value&mean_value <25 ~ "5",
-    25<mean_value&mean_value <27 ~ "6",
-    27<mean_value&mean_value <29 ~ "7"
-  ))
+    mean_value = mean(Data_value,na.rm = TRUE)
+    ) 
 
 ggplot(average_excellent,aes(x = Year, y = mean_value,group = State, color = State))+
   geom_point(alpha = 0.3) +
-  geom_line(alpha = 0.7) 
+  geom_line(alpha = 0.7) +
+  theme(legend.position = "bottom")
+
+
 ```
+<font size = 4 face="Times New Roman">It is hard to say that the average value of excellent response within each state have a pattern. From the beginning and the end, l can conclude that average value of excellent response have decreased over time.</font>
+
 <font size = 5>Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.</font>
 ```{r}
 distribution_response <- 
@@ -195,18 +191,17 @@ distribution_response <-
 
 ggplot(distribution_response,aes(x = Response, y = Data_value))+
   geom_boxplot(aes(color = Response)) +
+  theme(legend.position = "bottom")
   facet_grid(1.~Year)
 ```
+<font size = 4 face="Times New Roman">The data value of "Excellent" and "Poor"  didn't change a lot over time. The data value of "Fair" and "Good",decrease a little. The data value of "Very Good" increase a lot.It seems that many people who chose "Fair" and "Good" in 2006 choose "Very Good" in 2010.</font>
 
-
-#Problem 3
+# Problem 3
 
 ```{r results='hide'}
 accelerometers_df <- read_csv("data/accel_data.csv")
 ```
 <font size = 5>Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).</font>
-
-
 
 ```{r}
 accelerometers_df_hm <- accelerometers_df %>% 
@@ -228,6 +223,26 @@ accelerometers_df_hm <- accelerometers_df %>%
   arrange(week,day_of_week) %>% 
   select(week,day_id,day,day_of_week,day_type,Minute,hour,minute,activity,)
 ```
+<font size = 4 face="Times New Roman"> accelerometers_df_hm includes `r nrow(accelerometers_df_hm)` observations for `r ncol(accelerometers_df_hm)` variables. For variables, they are `r colnames(accelerometers_df_hm)`. 
+
+`r colnames(accelerometers_df_hm)[1]` is week.
+
+`r colnames(accelerometers_df_hm)[2]` is day identifier.
+
+`r colnames(accelerometers_df_hm)[3]` is day of week, such as Monday, Tuesday.
+
+`r colnames(accelerometers_df_hm)[4]` is day sequence of week. I set the first day of week is monday, which is 1.
+
+`r colnames(accelerometers_df_hm)[5]` is day type, weekday or weekend
+
+`r colnames(accelerometers_df_hm)[6]` is Minute of the day.
+
+`r colnames(accelerometers_df_hm)[7]` is the hour of the day
+
+`r colnames(accelerometers_df_hm)[8]` is the minute of the hour
+
+`r colnames(accelerometers_df_hm)[9]` is the activity.
+</font>
 
 <font size = 5>Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?</font>
 ```{r}
@@ -252,9 +267,11 @@ ggplot(day_total_activity,aes(x = day_of_week, y = total_activity,group = week))
     name = "week", 
     discrete = FALSE
   )
-
-
 ```
+<font size = 4 face="Times New Roman">By checking the data, l can find the total activity of Saturday in week 4 and week 5 is 1440, which means the activity of each minute in this day is 1.00, which is relatively impossible, so l try to analyze the trend without this two outliers. 
+
+From the plot, l find that the activity from Tuesday to Friday is stable and is usually increasing(except Friday in week 4).The activity of Saturday are close to the activity of weekday, the activity of Sunday are fluctuant, which is relatively low in week 4 and week 5. The activity of Monday are close to the activity of other weekdays, the exception is Moday in week 1 which may due to the start of the experiment.</font>
+
 <font size = 5>Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.</font>
 ```{r}
 daily_activity <- accelerometers_df_hm %>% 
@@ -268,7 +285,11 @@ accelerometers_df_hm %>%
   ggplot(aes(x = Minute , y = activity,group = day)) +
   geom_line(aes(color = day),alpha = 0.5) +
   geom_point(aes(color = day),alpha = 0.5,size = 0.5) +
-  geom_rug(aes(color = day),alpha = 0.5)
+  geom_rug(aes(color = day),alpha = 0.5)+
+  scale_x_continuous(breaks = c(0,120,240,360,480,600,720,840,960,1080,1200,1320,1440),
+                     labels = c("0:00","2:00","4:00","6:00","8:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00","24:00"))
 
 ```
+<font size = 4 face="Times New Roman">From the plot, l find that the activity of this man from 6:00 to 22:00 is much higher than the activity from 22:00 to 6:00 tomorrow, which might be the sleep time of this man. 
 
+During the 6:00 to 22:00, there are several time period that the activity of this man are extermely high: 7:00-7:30 in Thursday, 11:00-12:00 in Sunday, 16:30-17:00 in Monday and Sunday,19:30-20:00 in Wednesday, 20:00-22:00 in Friday. By comparing the number of point, l guess that this man has some regular activity in 11:00-12:00,16:30-17:00 in Sunday and 20:00-22:00 in Friday </font>
